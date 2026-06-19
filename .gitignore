@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Machine Learning specific (Don't track massive datasets or local checkpoints)
+ml/data/
+ml/checkpoints/
+
+# Environment variables / secrets
+.env
