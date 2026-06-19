@@ -4,3 +4,7 @@ pandas
 scikit-learn
 notebook
 matplotlib
+timm 
+numpy 
+pillow 
+tqdm

@@ -165,9 +165,11 @@ Based on ACE (American Council on Exercise) classification:
 ### 1. ML — train the models
  
 ```bash
-cd ml
 python -m venv venv && source venv/bin/activate
-pip install torch torchvision timm pandas numpy scikit-learn matplotlib pillow tqdm
+
+cd ml
+
+pip install -r requirements.txt
  
 # Download datasets
 kaggle datasets download -d fedesoriano/body-fat-prediction-dataset -p data/
@@ -222,9 +224,9 @@ docker-compose up --build
  
 | Model | Metric | Value |
 |---|---|---|
-| Tabular MLP | MAE | — |
-| Silhouette encoder | MAE (measurements) | — |
-| Full pipeline | Body fat MAE | — |
+| Tabular MLP | MAE | _ |
+| Silhouette encoder | MAE (measurements) | _ |
+| Full pipeline | Body fat MAE | _ |
  
 ---
  
@@ -241,15 +243,15 @@ docker-compose up --build
  
 ## References
  
-- Ruiz et al. — *Human Body Measurement Estimation with Adversarial Augmentation* (BodyM dataset paper)
+- Ruiz et al. : *Human Body Measurement Estimation with Adversarial Augmentation* (BodyM dataset paper)
 - Surrogate body fat estimation via silhouette: [Koop et al., Nature Communications Medicine 2022](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9329470/)
 - EfficientNet: Tan & Le, *EfficientNet: Rethinking Model Scaling for CNNs*, ICML 2019
-- [`timm` library](https://github.com/huggingface/pytorch-image-models) — PyTorch Image Models
+- [`timm` library](https://github.com/huggingface/pytorch-image-models), PyTorch Image Models
 ---
  
 ## Author
  
-**Ahmed** — M2 DSIR @ ISAMM
+**Ahmed**, M2 DSIR @ ISAMM
  
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=flat&logo=linkedin)](https://www.linkedin.com/in/ahmed-ayari-767102266/)
 [![GitHub](https://img.shields.io/badge/GitHub-Follow-black?style=flat&logo=github)](https://github.com/Ahmed-Ayari)
