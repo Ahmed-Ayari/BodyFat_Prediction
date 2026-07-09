@@ -53,3 +53,27 @@ def print_comparison(model_metrics, baseline_metrics, model_name="Model"):
     print("-" * 40)
     for key in ["mae", "mse", "rmse", "r2"]:
         print(f"{key.upper():<10} {model_metrics[key]:<15.4f} {baseline_metrics[key]:<15.4f}")
+
+def evaluate_vision_model(model, data_loader, device=None, target_std=None):
+    device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    model.eval()
+
+    preds, targets = [], []
+
+    with torch.no_grad():
+        for X_batch, y_batch in data_loader:
+            X_batch = X_batch.to(device)
+            batch_preds = model(X_batch).squeeze(-1)
+            preds.append(batch_preds.cpu())
+            targets.append(y_batch)
+
+    preds = torch.cat(preds).numpy()
+    targets = torch.cat(targets).numpy()
+
+    target_mean = np.mean(targets) if target_mean is None else target_mean
+
+    real_value = (preds * target_std) + target_mean
+
+    metrics = compute_regression_metrics(targets, preds)
+    return metrics, preds, targets
