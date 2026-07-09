@@ -16,8 +16,8 @@ __pycache__/
 Thumbs.db
 
 # Machine Learning specific (Don't track massive datasets or local checkpoints)
-ml/data/
-ml/checkpoints/
+ML/data/
+ML/checkpoints/
 
 # Environment variables / secrets
 .env

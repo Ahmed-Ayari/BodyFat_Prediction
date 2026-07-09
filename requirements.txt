@@ -8,3 +8,6 @@ timm
 numpy 
 pillow 
 tqdm
+fastapi[standard]
+uvicorn
+pydantic
