@@ -11,3 +11,6 @@ tqdm
 fastapi[standard]
 uvicorn
 pydantic
+rembg 
+pillow 
+onnxruntime

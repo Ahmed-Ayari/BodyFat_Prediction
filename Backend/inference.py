@@ -16,9 +16,13 @@ sys.path.append(str(PROJECT_ROOT / "ML/checkpoints"))
 from model import BodyFatMLP, BodyM_EfficientNet
 
 
+CHECKPOINT_DIR = PROJECT_ROOT / "ML" / "checkpoints"
+DATA_DIR = PROJECT_ROOT / "ML" / "data" / "BodyM"
+
+
 def load_model(checkpoint_path, device=None):
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
 
     model_name = ""
     
@@ -57,7 +61,7 @@ def predict(model, scaler, feature_columns, raw_input: dict, device):
     raw_input: dict of {feature_name: value}, must contain all feature_columns.
     """
     row = pd.DataFrame([raw_input])[feature_columns]
-    scaled = scaler.transform(row.values)
+    scaled = scaler.transform(row)
 
     X = torch.tensor(scaled, dtype=torch.float32).to(device)
 
@@ -66,20 +70,22 @@ def predict(model, scaler, feature_columns, raw_input: dict, device):
 
     return pred.item()
 
-def predict_vision_model(model, scaler, front_image_path, side_image_path, device, measurement_cols):
+def predict_vision_model(model, scaler, front_image_mask, side_image_mask, device, measurement_cols, gender=1):
 
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
     ])
 
-    front_image = transform(Image.open(front_image_path).convert("L"))
-    side_image = transform(Image.open(side_image_path).convert("L"))
+    front_image = transform(front_image_mask)
+    side_image = transform(side_image_mask)
+
+    gender_tensor = torch.tensor([float(gender)], dtype=torch.float32).to(device)  # shape: (1,)
 
     X = torch.cat([front_image, side_image], dim=0).unsqueeze(0).to(device)  # shape: (1, 2, 224, 224)
 
     with torch.no_grad():
-        pred = model(X)
+        pred = model(X, gender_tensor)  # shape: (1, num_measurements)
 
     scaled_pred = pred.cpu().numpy()
     real_pred = (scaled_pred * scaler["std"]) + scaler["mean"]
@@ -90,29 +96,79 @@ def predict_vision_model(model, scaler, front_image_path, side_image_path, devic
 
     return labled_pred
 
+def combine_predictions(vision_measurements: dict, age: float, weight: float, height: float):
+    combined_input = {
+        "Age": age,
+        "Weight": weight * 2.20462,  # Convert kg to lbs
+        "Height": height / 2.54,  # Convert cm to inches
+    }
+
+    normalized_measurements = {
+        key.strip().lower().replace("_", "-"): value
+        for key, value in vision_measurements.items()
+    }
+
+    measurement_aliases = {
+        "Chest": ["chest"],
+        "Abdomen": ["waist"],
+        "Hip": ["hip"],
+        "Thigh": ["thigh"],
+        "Ankle": ["ankle"],
+        "Biceps": ["bicep", "biceps"],
+        "Forearm": ["forearm"],
+        "Wrist": ["wrist"],
+    }
+
+    for feature_name, aliases in measurement_aliases.items():
+        value = next(
+            (normalized_measurements[alias] for alias in aliases if alias in normalized_measurements),
+            None,
+        )
+        if value is None:
+            raise ValueError(f"Missing measurement for {feature_name} in vision model predictions.")
+        combined_input[feature_name] = value
+
+    return combined_input
+
+
+model, feature_columns, device = load_model(CHECKPOINT_DIR / "bodyfat_mlp.pt")
+scaler = load_scaler(CHECKPOINT_DIR / "bodyfat_scaler.pkl")
+vision_model, measurement_cols, target_dict, device = load_model(CHECKPOINT_DIR / "bodym_efficientnet.pt")
+
 
 if __name__ == "__main__":
-    model, feature_columns, device = load_model("checkpoints/bodyfat_mlp.pt")
-    scaler = load_scaler("checkpoints/bodyfat_scaler.pkl")
-
-    vision_model, measurement_cols, target_dict, device = load_model("checkpoints/bodym_efficientnet.pt")
-
     example_input = {
-        "Age": 30,
-        "Weight": 180,
-        "Height": 70,
-        "Neck": 38,
-        "Chest": 100,
-        "Abdomen": 90,
-        "Hip": 98,
-        "Thigh": 58,
-        "Knee": 38,
-        "Ankle": 22,
-        "Biceps": 32,
-        "Forearm": 28,
-        "Wrist": 18,
+        "Age": 23,
+        "Weight": 154.25,
+        "Height": 67.75,
+        "Chest": 93.1,
+        "Abdomen": 85.2,
+        "Hip": 94.5,
+        "Thigh": 59.0,
+        "Ankle": 21.9,
+        "Biceps": 32.0,
+        "Forearm": 27.4,
+        "Wrist": 17.1,
+    }
+
+    vision_input = {
+        "front_image_path": DATA_DIR / "testA" / "mask" / "0a61f2df7743db47dcbe5c9d0579e7ab.png",
+        "side_image_path": DATA_DIR / "testA" / "mask_left" / "0a61f2df7743db47dcbe5c9d0579e7ab.png",
+        "gender": 1,
     }
 
     prediction = predict(model, scaler, feature_columns, example_input, device)
+    vision_prediction = predict_vision_model(
+        vision_model, 
+        target_dict, 
+        vision_input["front_image_path"], 
+        vision_input["side_image_path"], 
+        device, 
+        measurement_cols, 
+        vision_input["gender"]
+        )
 
     print(f"Predicted body fat: {prediction:.2f}%")
+    print("Predicted body measurements:")
+    for measurement, value in vision_prediction.items():
+        print(f"{measurement}: {value:.2f}")
