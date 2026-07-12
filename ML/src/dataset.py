@@ -28,10 +28,11 @@ class BodyMDataset(torch.utils.data.Dataset):
         self.mask_dir = data_dir / "mask"
         self.mask_left_dir = data_dir / "mask_left"
 
+        hwg_metadata = pd.read_csv(data_dir / "hwg_metadata.csv").set_index("subject_id")
         measurements = pd.read_csv(data_dir / "measurements.csv").set_index("subject_id")
         photo_map = pd.read_csv(data_dir / "subject_to_photo_map.csv")
 
-        photo_map = photo_map[photo_map["subject_id"].isin(measurements.index)]
+        photo_map = photo_map[photo_map["subject_id"].isin(measurements.index) & photo_map["subject_id"].isin(hwg_metadata.index)]
 
         self.samples = []
         for _, row in photo_map.iterrows():
@@ -43,6 +44,10 @@ class BodyMDataset(torch.utils.data.Dataset):
 
         self.measurements = measurements
         self.measurement_cols = list(measurements.columns)
+
+        hwg_metadata["gender"] = hwg_metadata["gender"].apply(lambda x: 1 if x == "male" else 0)
+        self.metadata = hwg_metadata
+        self.metadata_cols = list(hwg_metadata.columns)
 
         if target_scaler is None:
             subject_ids = [s[0] for s in self.samples]
@@ -79,4 +84,6 @@ class BodyMDataset(torch.utils.data.Dataset):
         target = self.measurements.loc[subject_id].values.astype(np.float32)
         target = (target - self.target_mean) / self.target_std
 
-        return image, torch.from_numpy(target)
+        subject_gender = self.metadata.loc[subject_id, "gender"]
+
+        return image, torch.from_numpy(target), torch.tensor(subject_gender, dtype=torch.float32)

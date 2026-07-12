@@ -233,8 +233,8 @@ docker-compose up --build
 ## Roadmap
  
 - [x] Project architecture and pipeline design
-- [ ] Tabular MLP — train and evaluate
-- [ ] EfficientNet-B0 — fine-tune on BodyM
+- [x] Tabular MLP — train and evaluate
+- [x] EfficientNet-B0 — fine-tune on BodyM
 - [ ] FastAPI backend with `/predict` endpoint
 - [ ] Next.js 15 frontend (upload UI + results page)
 - [ ] Deploy to Vercel + Railway

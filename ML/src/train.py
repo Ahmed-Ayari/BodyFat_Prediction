@@ -85,7 +85,7 @@ def train_vision_model(model,
     val_dataset,
     epochs=100,
     batch_size=32,
-    lr=1e-5,
+    lr=1e-4,
     weight_decay=1e-4,
     patience=15,
     device=None,
@@ -96,8 +96,10 @@ def train_vision_model(model,
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
+    filtered_params = [p for p in model.parameters() if p.requires_grad]
+
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer = optim.Adam(filtered_params, lr=lr, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=5)
 
     best_val_loss = float("inf")
@@ -108,11 +110,12 @@ def train_vision_model(model,
     for epoch in range(1, epochs + 1):
         model.train()
         train_losses = []
-        for X_batch, y_batch in train_loader:
+        for X_batch, y_batch, gender_batch in train_loader:
             X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+            gender_batch = gender_batch.to(device)
 
             optimizer.zero_grad()
-            preds = model(X_batch)
+            preds = model(X_batch, gender_batch)
             loss = criterion(preds, y_batch)
             loss.backward()
             optimizer.step()
@@ -122,9 +125,11 @@ def train_vision_model(model,
         model.eval()
         val_losses, val_abs_errors = [], []
         with torch.no_grad():
-            for X_batch, y_batch in val_loader:
+            for X_batch, y_batch, gender_batch in val_loader:
                 X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-                preds = model(X_batch)
+                gender_batch = gender_batch.to(device)
+
+                preds = model(X_batch, gender_batch)
                 loss = criterion(preds, y_batch)
                 val_losses.append(loss.item())
                 val_abs_errors.append(torch.abs(preds - y_batch).cpu().numpy())
