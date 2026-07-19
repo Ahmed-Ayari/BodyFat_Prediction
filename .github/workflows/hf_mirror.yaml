@@ -31,7 +31,7 @@ jobs:
             exit 1
           fi
 
-          git remote add huggingface https://user:${HF_TOKEN}@huggingface.co/${HF_REPO}
+          git remote add huggingface https://Ahmed-Ayari:${HF_TOKEN}@huggingface.co/spaces/Ahmed-Ayari/BodyFat_Prediction
 
       - name: Prepare Hugging Face README
         run: |
