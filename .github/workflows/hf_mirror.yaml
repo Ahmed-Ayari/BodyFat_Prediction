@@ -31,7 +31,7 @@ jobs:
             exit 1
           fi
 
-          git remote add huggingface https://Ahmed-Ayari:${HF_TOKEN}@huggingface.co/spaces/Ahmed-Ayari/BodyFat_Prediction
+          git remote add huggingface https://user:${HF_TOKEN}@huggingface.co/${HF_REPO}
 
       - name: Prepare Hugging Face README
         run: |
@@ -42,6 +42,15 @@ jobs:
           else
             echo "No README file found for Hugging Face mirror."
             exit 1
+          fi
+
+      - name: Commit Hugging Face README
+        run: |
+          git add README.md
+          if git diff --cached --quiet; then
+            echo "No README changes to commit."
+          else
+            git commit -m "Prepare Hugging Face README"
           fi
 
       - name: Push to Hugging Face
