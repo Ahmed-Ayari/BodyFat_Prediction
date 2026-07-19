@@ -1,8 +1,8 @@
 ---
 title: BodyFat Prediction
 emoji: 🏃
-colorFrom: Blue
-colorTo: Green
+colorFrom: blue
+colorTo: red
 sdk: gradio
 sdk_version: 6.20.0
 python_version: '3.12'
