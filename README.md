@@ -2,7 +2,7 @@
 
 > Upload a front and side photo — get an estimated body fat percentage in seconds.
 
-A full-stack ML application that estimates body fat percentage from body silhouettes using a two-model pipeline: **EfficientNet-B0** extracts body measurements from silhouette images, and a **tabular MLP** converts those measurements into a body fat estimate. Built with PyTorch, FastAPI, and Next.js 15.
+A full-stack ML application that estimates body fat percentage from body silhouettes using a two-model pipeline: **EfficientNet-B0** extracts body measurements from silhouette images, and a **tabular MLP** converts those measurements into a body fat estimate. Built with PyTorch, FastAPI, and Gradio.
 
 ---
 
@@ -58,7 +58,7 @@ The silhouette approach strips clothing and lighting noise from the input, feedi
 | Regression head | Custom MLP (PyTorch) |
 | Photo → silhouette | `rembg` (background/foreground segmentation) |
 | API | FastAPI + Uvicorn |
-| Frontend | Next.js 15 (App Router) + TypeScript + Tailwind CSS |
+| Frontend | Gradio |
 | Deployment | Vercel (frontend) · Railway (backend) |
 
 ---
@@ -86,12 +86,7 @@ body-fat-analyser/
 │   ├── requirements.txt
 │   └── Dockerfile
 │
-├── frontend/
-│   ├── app/
-│   │   ├── page.tsx           # upload UI (front + side photo, age, weight, height, gender)
-│   │   └── result/page.tsx    # prediction display + body fat category
-│   ├── components/
-│   └── public/
+├── app.py                     # Gradio Frontend
 │
 ├── docker-compose.yml
 └── README.md
@@ -176,6 +171,7 @@ gender:      "male" | "female"
   },
   "body_fat_percentage": 22.57,
   "body_fat_supported": true,
+  "category": null,
   "message": null
 }
 ```
@@ -206,7 +202,7 @@ Based on ACE (American Council on Exercise) classification:
 | Essential fat | 2–5% | 10–13% |
 | Athletic | 6–13% | 14–20% |
 | Fitness | 14–17% | 21–24% |
-| Acceptable | 18–24% | 25–31% |
+| Average | 18–24% | 25–31% |
 | Obesity | 25%+ | 32%+ |
 
 ---
@@ -305,7 +301,7 @@ docker-compose up --build
 - [x] Tabular MLP — train and evaluate
 - [x] EfficientNet-B0 — gender-aware, fine-tuned on BodyM, flip-augmented
 - [x] FastAPI backend with `/predict` endpoint
-- [ ] Next.js 15 frontend (upload UI + results page)
+- [x] Gradio frontend
 - [ ] Deploy to Vercel + Railway
 - [ ] Mixed-gender tabular dataset for full gender support
 - [ ] Mobile app (React Native / Expo) — planned

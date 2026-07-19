@@ -10,4 +10,5 @@ class PredictResponse(BaseModel):
     body_fat_percentage: float | None
     measurements: dict[str, float]
     body_fat_supported: bool
+    category: str | None = None
     message: str | None = None

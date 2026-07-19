@@ -12,6 +12,39 @@ allowed_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tiff"}
 
 app = FastAPI()
 
+
+def get_body_fat_feedback(body_fat_percentage: float) -> tuple[str, str]:
+    # Thresholds are tailored for adult males because female body-fat prediction is not enabled.
+    if body_fat_percentage < 6:
+        return (
+            "Essential fat",
+            "Very low body-fat level. Keep training smart and make sure nutrition and recovery are sufficient.",
+        )
+    if body_fat_percentage < 14:
+        return (
+            "Athletic",
+            "Great athletic range. Maintain your routine with balanced strength training, cardio, and protein intake.",
+        )
+    if body_fat_percentage < 18:
+        return (
+            "Fitness",
+            "Healthy and fit range. Stay consistent with workouts and monitor diet quality to keep progressing.",
+        )
+    if body_fat_percentage < 25:
+        return (
+            "Average",
+            "Average range. To improve body composition, increase activity and follow a moderate calorie deficit.",
+        )
+    if body_fat_percentage < 30:
+        return (
+            "Overweight",
+            "Above the healthy range. Focus on regular gym sessions, daily movement, and a structured nutrition plan.",
+        )
+    return (
+        "Obese",
+        "High body-fat level. It is strongly recommended to start a supervised fitness plan and consult a healthcare professional.",
+    )
+
 @app.get("/")
 def health_check():
     return {"status": "healthy"}
@@ -78,9 +111,23 @@ async def predict_body_fat(
         if side_image_path.exists():
             os.remove(side_image_path)
 
+    category = None
+    message = None
+
+    if fat_prediction is None:
+        message = "Body fat prediction is not supported for females at the moment."
+    else:
+        category, recommendation = get_body_fat_feedback(fat_prediction)
+        message = (
+            f"Category: {category}. "
+            f"\n"
+            f"Recommendation: {recommendation}"
+        )
+
     return schemas.PredictResponse(
         body_fat_percentage=fat_prediction,
         measurements=prediction,
         body_fat_supported=(gender == schemas.Gender.MALE),
-        message=None if fat_prediction is not None else "Body fat prediction is not supported for females at the moment."
+        category=category,
+        message=message,
     )

@@ -1,0 +1,49 @@
+name: Mirror to Hugging Face Space
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add Hugging Face remote
+        env:
+          HF_REPO: ${{ secrets.HF_REPO }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_REPO" ] || [ -z "$HF_TOKEN" ]; then
+            echo "HF_REPO and HF_TOKEN secrets must be configured."
+            exit 1
+          fi
+
+          git remote add huggingface https://user:${HF_TOKEN}@huggingface.co/${HF_REPO}
+
+      - name: Prepare Hugging Face README
+        run: |
+          if [ -f README_HF.md ]; then
+            cp README_HF.md README.md
+          elif [ -f README.md ]; then
+            echo "Using existing README.md for Hugging Face"
+          else
+            echo "No README file found for Hugging Face mirror."
+            exit 1
+          fi
+
+      - name: Push to Hugging Face
+        run: |
+          git push --force huggingface HEAD:main
